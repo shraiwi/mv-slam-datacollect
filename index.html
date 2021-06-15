@@ -3,6 +3,7 @@
     <style>
         html {
             background-color: black;
+            color: white !important;
         }
         html, body {
             margin: 0;
@@ -44,6 +45,18 @@
             position: absolute;
             top: 10px;
             left: 10px;
+        }
+
+        canvas {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        button {
+            font-size: 2em;
+            color: white;
+            border: none;
+            filter: brightness(100%);
+            opacity: 1;
             background-color: rgba(0, 0, 0, 0.5);
         }
 
@@ -53,18 +66,18 @@
             position: fixed;
             display: inline-block;
             bottom: 0;
-            font-size: 1em;
-            color: white;
-            border: none;
-            filter: brightness(100%);
+        }
+
+        button:active {
             background-color: rgba(255, 255, 255, 0.5);
         }
 
-        button#startstop:active {
-            filter: brightness(150%);
+        button:hover {
+            background-color: rgba(128, 128, 128, 0.5);
+            filter: brightness(110%);
         }
 
-        button#startstop:disabled {
+        button:disabled {
             filter: brightness(50%);
         }
 
@@ -73,6 +86,7 @@
         }
 
         button h1 {
+            font-size: 1.5em;
             margin: auto;
         }
     </style>
@@ -82,8 +96,11 @@
     <video autoplay></video>
     <button id="startstop" disabled><h1>record</h1></button>
     <div id="graphoverlay">
-        <canvas id="accel" width="256" height="90"></canvas>
-        <canvas id="gyro" width="256" height="90"></canvas>
+        <canvas id="accel" width="200" height="90"></canvas>
+        <canvas id="gyro" width="200" height="90"></canvas>
+        <br>
+        <button id="video-dl"><h1>download video</h1></button>
+        <button id="data-dl"><h1>download data</h1></button>
     </div>
     <script>
 
@@ -167,28 +184,32 @@
             putData(...data) {
                 this.ctx.save();
 
-                this.move(-1, 0);
+                this.clear();
+
+                this.ctx.lineWidth = 1;
 
                 let i = 0;
                 const entries = Object.entries(this.axes);
                 for (const [axisName, axisProp] of entries) {
+
+                    if (!axisProp._history) axisProp._history = [];
                     
-                    const offset = ((i + 1) / (entries.length + 2)) * this.dims[1];
+                    const offset = ((i + 1) / (entries.length + 1)) * this.dims[1];
+                    const y = (-data[i] * axisProp.scale + offset);
 
-                    let [x, y1] = [
-                        this.dims[0] - 1,
-                        0 | (-data[i] * axisProp.scale + offset)
-                    ];
+                    axisProp._history.push(y);
+                    if (axisProp.length > this.dims[0]) axisProp._history.shift();
 
-                    let y0 = axisProp._lastPlot || y1;
+                    this.ctx.strokeStyle = axisProp.color;
 
-                    axisProp._lastPlot = y1;
+                    this.ctx.beginPath();
 
-                    [y0, y1] = [Math.min(y0, y1), Math.max(y0, y1)]
-
-                    this.ctx.fillStyle = axisProp.color;
-                    this.ctx.fillRect(x, y0, 1, Math.max(y1-y0, 1));
+                    for (let x = 0; x < axisProp._history.length; x++) {
+                        this.ctx[x ? "lineTo" : "moveTo"](x, axisProp._history[x])
+                    }
                     
+                    this.ctx.stroke();
+
                     i++;
                 }
 
@@ -392,7 +413,7 @@
             },
 
             container: "video/webm",
-            //codec: "h264",
+            codec: "vp8",
             bitrate: 10000000,
         }, {
             accelerometer: {
@@ -439,5 +460,9 @@
 
             console.log(blob);*/
         });
+
+        /*for (let i = 0; i < 100; i++) {
+            ACCEL_GRAPH.putData(Math.sin(i * 0.1), i, i%10);
+        }*/
     </script>
 </body>
