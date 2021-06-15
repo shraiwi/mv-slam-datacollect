@@ -173,7 +173,7 @@
                 const entries = Object.entries(this.axes);
                 for (const [axisName, axisProp] of entries) {
                     
-                    const offset = (i / (entries.length + 1)) * this.dims[1];
+                    const offset = ((i + 1) / (entries.length + 2)) * this.dims[1];
 
                     let [x, y1] = [
                         this.dims[0] - 1,
@@ -370,15 +370,15 @@
         }
 
         const ACCEL_GRAPH = new Graph($id("accel"), {
-            x: { color: "red", scale: 1 },
-            y: { color: "green", scale: 1 },
-            z: { color: "blue", scale: 1 },
+            x: { color: "red", scale: 5 },
+            y: { color: "green", scale: 5 },
+            z: { color: "blue", scale: 5 },
         });
 
         const GYRO_GRAPH = new Graph($id("gyro"), {
-            x: { color: "red", scale: 1 },
-            y: { color: "green", scale: 1 },
-            z: { color: "blue", scale: 1 },
+            x: { color: "red", scale: 10 },
+            y: { color: "green", scale: 10 },
+            z: { color: "blue", scale: 10 },
         });
 
         const RECORDER = new Recorder({
@@ -439,9 +439,5 @@
 
             console.log(blob);*/
         });
-
-        for (let i = 0; i < 255; i++) {
-            ACCEL_GRAPH.putData(i, i * 5, -i * 0.2);
-        }
     </script>
 </body>
