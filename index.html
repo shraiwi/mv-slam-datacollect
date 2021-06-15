@@ -58,15 +58,20 @@
             font-size: 1em;
             color: white;
             border: none;
-            background-color: rgba(255, 0, 0, 0.5);
+            filter: brightness(100%);
+            background-color: rgba(255, 255, 255, 0.5);
         }
 
         button#startstop:active {
-            background-color: rgba(255, 0, 0, 0.7);
+            filter: brightness(150%);
         }
 
         button#startstop:disabled {
-            background-color: rgba(128, 128, 128, 0.7);
+            filter: brightness(50%);
+        }
+
+        button:disabled h1 {
+            background-color: rgba(128, 128, 128, 0.5);
         }
 
         button h1 {
@@ -112,7 +117,6 @@
 
             return [mo, dy, yr, hr, mi, sc].join('-');
         }
-
         const $toggleFullscreen = () => {
             document.body.requestFullscreen();
         }
@@ -176,7 +180,6 @@
 
         class Recorder {
             constructor(videoParams = {}, sensorParams = {}) {
-
                 videoParams = {
                     ...{
                         constraints: {},
@@ -211,6 +214,8 @@
                 this.sensorParams = sensorParams;
                 this.sensorChunks = null;
                 this.sensors = null;
+
+                this.state = "inactive";
 
                 if (!MediaRecorder.isTypeSupported(this.videoParams.mimeType)) {
                     console.warn("MIME type not supported!");
@@ -280,6 +285,8 @@
 
                 document.body.classList.add("recording");
 
+                this.state = "active";
+
                 console.log("recording started");
             }
 
@@ -298,6 +305,8 @@
                 await Promise.all(promises);
 
                 document.body.classList.remove("recording");
+
+                this.state = "inactive";
 
                 console.log("recording stopped");
             }
@@ -338,7 +347,25 @@
 
         const RECBUTTON = $id("startstop");
 
+        RECBUTTON.setState = (html, color = "rgba(255, 255, 255, 0.5)") => {
+            RECBUTTON.children[0].innerHTML = html;
+            RECBUTTON.style.backgroundColor = color;
+        }
+
         var blob = null;
+
+        RECBUTTON.onclick = () => {
+            switch (RECORDER.state) {
+                case "inactive":
+                    RECORDER.start();
+                    RECBUTTON.setState("stop recording");
+                    break;
+                case "active": 
+                    await RECORDER.stop();
+                    RECBUTTON.setState("record");
+                    break;
+            }
+        }
 
         RECORDER.init().then(async () => {
             RECBUTTON.disabled = false;
