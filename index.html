@@ -52,7 +52,7 @@
         }
 
         button {
-            font-size: 2em;
+            font-size: 1em;
             color: white;
             border: none;
             filter: brightness(100%);
@@ -86,7 +86,7 @@
         }
 
         button h1 {
-            font-size: 1.5em;
+            font-size: 1em;
             margin: auto;
         }
     </style>
@@ -99,7 +99,7 @@
         <canvas id="accel" width="200" height="90"></canvas>
         <canvas id="gyro" width="200" height="90"></canvas>
         <br>
-        <button id="video-dl"><h1>download video</h1></button>
+        <button id="video-dl" onclick="$downloadVideo(RECORDER.getVideoBlob(), $timeAsFile())"><h1>download video</h1></button>
         <button id="data-dl"><h1>download data</h1></button>
     </div>
     <script>
@@ -198,7 +198,9 @@
                     const y = (-data[i] * axisProp.scale + offset);
 
                     axisProp._history.push(y);
-                    if (axisProp.length > this.dims[0]) axisProp._history.shift();
+                    while (axisProp._history.length > this.dims[0]) {
+                        axisProp._history.shift();
+                    }
 
                     this.ctx.strokeStyle = axisProp.color;
 
