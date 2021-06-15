@@ -69,13 +69,13 @@
             background-color: rgba(128, 128, 128, 0.7);
         }
 
-        button#startstop h1 {
+        button h1 {
             margin: auto;
         }
     </style>
 
 </head>
-<body>
+<body onload="this.requestFullscreen()">
     <video autoplay></video>
     <button id="startstop" disabled><h1>record</h1></button>
     <canvas id="graphoverlay" width="256" height="256"></canvas>
@@ -98,7 +98,6 @@
 
             URL.revokeObjectURL(a.href);
         };
-
         const $timeAsFile = () => {
             let now = new Date();
 
