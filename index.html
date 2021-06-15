@@ -93,7 +93,7 @@
         const $once = (obj, func) => new Promise((res) => obj.addEventListener(func, res))
         const $downloadVideo = (blob, name) => {
             const a = document.createElement("a");
-            const re = /\/(.*);/;
+            const re = /\/(.*);?/;
             document.body.appendChild(a);
 
             a.href = URL.createObjectURL(blob);
