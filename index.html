@@ -41,8 +41,6 @@
         }
 
         #graphoverlay {
-            width: 256px;
-            height: 256px;
             position: absolute;
             top: 10px;
             left: 10px;
@@ -83,7 +81,10 @@
 <body onclick="$toggleFullscreen()">
     <video autoplay></video>
     <button id="startstop" disabled><h1>record</h1></button>
-    <canvas id="graphoverlay" width="256" height="256"></canvas>
+    <div id="graphoverlay">
+        <canvas id="accel" width="256" height="90"></canvas>
+        <canvas id="gyro" width="256" height="90"></canvas>
+    </div>
     <script>
 
         const $id = (s) => document.getElementById(s);
@@ -132,10 +133,18 @@
             BLACK: "black",
         };
 
-        class CanvasPlus {
+        class Graph {
 
-            constructor(elem, clearColor = COLORS.CLEAR) {
+            constructor(elem, axes, clearColor = COLORS.CLEAR) {
                 this.elem = elem;
+                this.axes = axes;
+                /*
+                x: {
+                    color: "red",
+                    scale: 10,
+                }
+
+                */
                 this.ctx = elem.getContext("2d");
                 this.dims = [ elem.width, elem.height ];
                 this.clearColor = clearColor;
@@ -155,6 +164,31 @@
                 this.ctx.restore();
             }
 
+            putData(...data) {
+                this.ctx.save();
+
+                this.move(-1, 0);
+
+                let i = 0;
+                const entries = Object.entries(this.axes);
+                for (const [axisName, axisProp] of entries) {
+                    const offset = (i / (entries.length + 1)) * this.dims[1];
+                    this.plot(this.dims[0] - 1, 0 | (data[i] * axisProp.scale + offset), axisProp.color);
+                    i++;
+                }
+
+                this.ctx.restore();
+            }
+
+            plot(x, y, color) {
+                this.ctx.save();
+
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(x, y-1, 1, 3);
+
+                this.ctx.restore();
+            } 
+
             fillWith(color = COLORS.CLEAR) {
                 this.ctx.save();
 
@@ -166,13 +200,15 @@
             }
 
             clear() {
-                this.fillWith(this.clearColor)
+                this.ctx.clearRect(0, 0, ...this.dims);
             }
 
             move(x, y, overflow = COLORS.CLEAR) {
                 this.ctx.save();
 
                 const dat = this.ctx.getImageData(0, 0, ...this.dims);
+
+                this.clear();
 
                 this.ctx.putImageData(dat, x, y);
 
@@ -267,6 +303,13 @@
                     }
 
                     this.sensors[key].obj.onreading = () => {
+                        if (this.sensorParams[key].callback) {
+                            this.sensorParams[key].callback(
+                                this.sensors[key].obj.x,
+                                this.sensors[key].obj.y,
+                                this.sensors[key].obj.z,
+                            );
+                        }
                         this.sensors[key].data.push(
                             this.sensors[key].obj.x,
                             this.sensors[key].obj.y,
@@ -323,7 +366,18 @@
             }
         }
 
-        const OVERLAY = new CanvasPlus($id("graphoverlay"));
+        const ACCEL_GRAPH = new Graph($id("accel"), {
+            x: { color: "red", scale: 1 },
+            y: { color: "green", scale: 1 },
+            z: { color: "blue", scale: 1 },
+        });
+
+        const GYRO_GRAPH = new Graph($id("gyro"), {
+            x: { color: "red", scale: 1 },
+            y: { color: "green", scale: 1 },
+            z: { color: "blue", scale: 1 },
+        });
+
         const RECORDER = new Recorder({
             videoElem: $query("video"),
 
@@ -339,9 +393,11 @@
             bitrate: 10000000,
         }, {
             accelerometer: {
+                callback: (...data) => ACCEL_GRAPH.putData(...data),
                 frequency: 60,
             },
             gyroscope: {
+                callback: (...data) => GYRO_GRAPH.putData(...data),
                 frequency: 60,
             },
         });
@@ -380,10 +436,5 @@
 
             console.log(blob);*/
         });
-
-        OVERLAY.clear();
-        OVERLAY.fillText(0, 0, "hello world!", COLORS.RED, 20, "bold Arial");
-
-        OVERLAY.move(-10, 0);
     </script>
 </body>
