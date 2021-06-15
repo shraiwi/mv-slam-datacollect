@@ -51,11 +51,11 @@
 
         button#startstop {
             width: 100vw;
-            height: 128px;
+            height: 100px;
             position: fixed;
             display: inline-block;
             bottom: 0;
-            font-size: 2em;
+            font-size: 1em;
             color: white;
             border: none;
             background-color: rgba(255, 0, 0, 0.5);
@@ -75,7 +75,7 @@
     </style>
 
 </head>
-<body onload="this.requestFullscreen()">
+<body onclick="$toggleFullscreen()">
     <video autoplay></video>
     <button id="startstop" disabled><h1>record</h1></button>
     <canvas id="graphoverlay" width="256" height="256"></canvas>
@@ -111,6 +111,10 @@
             ];
 
             return [mo, dy, yr, hr, mi, sc].join('-');
+        }
+
+        const $toggleFullscreen = () => {
+            document.body.requestFullscreen();
         }
 
         var _dummy = null;
@@ -314,8 +318,8 @@
             videoElem: $query("video"),
 
             constraints: {
-                width: { ideal: 1080 },
-                height: { ideal: 1920 },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
                 frameRate: { min: 30, ideal: 60 },
                 facingMode: { ideal: "environment" },
             },
