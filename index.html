@@ -172,9 +172,11 @@
             move(x, y, overflow = COLORS.CLEAR) {
                 this.ctx.save();
 
-                this.ctx.drawImage(this.elem, x, y);
+                const dat = this.ctx.getImageData(0, 0, ...this.dims);
 
-                this.ctx.restore()
+                this.ctx.putImageData(dat, x, y);
+
+                this.ctx.restore();
             }
         }
 
@@ -264,8 +266,7 @@
                         data: new Float64Array(0),
                     }
 
-                    this.sensors[key].obj.onreading = function () {
-                        console.log("readout");
+                    this.sensors[key].obj.onreading = () => {
                         this.sensors[key].data.push(
                             this.sensors[key].obj.x,
                             this.sensors[key].obj.y,
@@ -382,5 +383,7 @@
 
         OVERLAY.clear();
         OVERLAY.fillText(0, 0, "hello world!", COLORS.RED, 20, "bold Arial");
+
+        OVERLAY.move(-10, 0);
     </script>
 </body>
