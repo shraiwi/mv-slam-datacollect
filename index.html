@@ -354,7 +354,7 @@
 
         var blob = null;
 
-        RECBUTTON.onclick = () => {
+        RECBUTTON.onclick = async () => {
             switch (RECORDER.state) {
                 case "inactive":
                     RECORDER.start();
