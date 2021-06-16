@@ -105,7 +105,7 @@
         <canvas id="accel" width="200" height="90"></canvas>
         <canvas id="gyro" width="200" height="90"></canvas>
         <br>
-        <button id="video-dl"><h1>download video</h1></button>
+        <!--<button id="video-dl"><h1>download video</h1></button>-->
         <button id="data-dl"><h1>download data</h1></button>
         <button onclick="$toggleFullscreen()"><h1>fullscreen</h1></button>
         <button onclick="initAll()">
@@ -476,7 +476,7 @@
                 for (let i = 0; i < sensorAccessArrays[0].length; i++) {
                     row.length = 0;
                     for (const arr of sensorAccessArrays) {
-                        row.push(arr[i]);
+                        row.push(arr[i].toFixed(5));
                     }
                     csv += row.join() + '\n';
                 }
@@ -544,7 +544,7 @@
             });
 
             const RECBUTTON = $id("startstop");
-            const DLVIDEOBUTTON = $id("video-dl");
+            //const DLVIDEOBUTTON = $id("video-dl");
             const DLDATABUTTON = $id("data-dl");
 
             RECBUTTON.setState = (html, color = "rgba(255, 255, 255, 0.5)") => {
@@ -552,8 +552,12 @@
                 RECBUTTON.style.backgroundColor = color;
             }
 
-            DLVIDEOBUTTON.onclick = () => $download(RECORDER.getVideoBlob(), $timeAsFile());
-            DLDATABUTTON.onclick = () => $download(RECORDER.getSensorBlob(), $timeAsFile());
+            //DLVIDEOBUTTON.onclick = () => $download(RECORDER.getVideoBlob(), $timeAsFile());
+            DLDATABUTTON.onclick = () => {
+                const filename = $timeAsFile();
+                $download(RECORDER.getSensorBlob(), filename);
+                $download(RECORDER.getVideoBlob(), filename);
+            }
 
             RECBUTTON.onclick = async () => {
                 switch (RECORDER.state) {
