@@ -386,17 +386,19 @@
                     ...("Accelerometer" in window && { accelerometer: Accelerometer }),
                     ...("Gyroscope" in window && { gyroscope: Gyroscope }),
                     ...("Magnetometer" in window && { magnetometer: Magnetometer }),
+                    ...("LinearAccelerationSensor" in window && { linearaccelerationsensor: LinearAccelerationSensor }),
+                    ...("AbsoluteOrientationSensor" in window && { absoluteorientationsensor: AbsoluteOrientationSensor }),
                 }
 
                 for (let key in this.sensorParams) {
 
                     if (!(key in SENSOR_MAPPING)) console.warn(`Sensor '${key}' not supported!`);
 
-                    const permissionsState = await navigator.permissions.query({name: key});
+                    /*const permissionsState = await navigator.permissions.query({name: key});
 
                     if (permissionsState.state !== "granted") {
                         console.error("Permissions not granted!");
-                    }
+                    }*/
 
                     this.sensors[key] = {
                         obj: new SENSOR_MAPPING[key](this.sensorParams[key]),
