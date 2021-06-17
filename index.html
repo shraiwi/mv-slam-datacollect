@@ -103,6 +103,7 @@
     <button id="startstop" disabled><h1>record</h1></button>
     <div id="graphoverlay">
         <canvas id="accel" width="200" height="90"></canvas>
+        <canvas id="rel-accel" width="200" height="90"></canvas>
         <canvas id="gyro" width="200" height="90"></canvas>
         <br>
         <!--<button id="video-dl"><h1>download video</h1></button>-->
@@ -158,7 +159,7 @@
             <br>
             <label>
                 bitrate (Mbps) 
-                <input name="bitrate" type="number" min="0.1" max="50" value="10">
+                <input name="bitrate" type="number" min="0.1" max="50" value="15">
             </label>
         </form>
 
@@ -327,6 +328,8 @@
                         /*
                         accelerometer: {
                             frequency: 100,
+                            tracks: "quaternion.x,quaternion.y,",
+                            callback: [],
                         },
                         gyroscope: {...},
                         magnetometer: {...},
@@ -382,17 +385,47 @@
 
                 this.sensors = {};
 
-                const SENSOR_MAPPING = {
-                    ...("Accelerometer" in window && { accelerometer: Accelerometer }),
-                    ...("Gyroscope" in window && { gyroscope: Gyroscope }),
-                    ...("Magnetometer" in window && { magnetometer: Magnetometer }),
-                    ...("LinearAccelerationSensor" in window && { linearaccelerationsensor: LinearAccelerationSensor }),
-                    ...("AbsoluteOrientationSensor" in window && { absoluteorientationsensor: AbsoluteOrientationSensor }),
+                const sensorTemplates = {
+                    ...("Accelerometer" in window && {
+                        accelerometer: {
+                            constructor: Accelerometer,
+                            tracks: "x,y,z".split(),
+                            getTracksFrom(instance) { return [ instance.x, instance.y, instance.z ]; }
+                        }
+                    }),
+                    ...("Gyroscope" in window && { 
+                        gyroscope: {
+                            constructor: Gyroscope,
+                            tracks: "x,y,z".split(),
+                            getTracksFrom(instance) { return [ instance.x, instance.y, instance.z ]; }
+                        }
+                    }),
+                    ...("Magnetometer" in window && { 
+                        magnetometer: {
+                            constructor: Magnetometer,
+                            tracks: "x,y,z".split(),
+                            getTracksFrom(instance) { return [ instance.x, instance.y, instance.z ]; }
+                        }
+                    }),
+                    ...("LinearAccelerationSensor" in window && { 
+                        linearaccelerationsensor: {
+                            constructor: LinearAccelerationSensor,
+                            tracks: "x,y,z".split(),
+                            getTracksFrom(instance) { return [ instance.x, instance.y, instance.z ]; }
+                        }
+                    }),
+                    ...("AbsoluteOrientationSensor" in window && { 
+                        absoluteorientationsensor: {
+                            constructor: AbsoluteOrientationSensor,
+                            tracks: "quaternion.x,quaternion.y,quaternion.z,quaternion.w".split(),
+                            getTracksFrom(instance) { return [ instance.quaternion.x, instance.quaternion.y, instance.quaternion.z, instance.quaternion.w ]; }
+                        }
+                    }),
                 }
 
-                for (let key in this.sensorParams) {
+                for (const key in this.sensorParams) {
 
-                    if (!(key in SENSOR_MAPPING)) console.warn(`Sensor '${key}' not supported!`);
+                    if (!(key in sensorTemplates)) console.warn(`Sensor '${key}' not supported!`);
 
                     /*const permissionsState = await navigator.permissions.query({name: key});
 
@@ -400,28 +433,32 @@
                         console.error("Permissions not granted!");
                     }*/
 
-                    this.sensors[key] = {
-                        obj: new SENSOR_MAPPING[key](this.sensorParams[key]),
-                        data: {
-                            x: [],
-                            y: [],
-                            z: [],
-                        },
+                    const sensorTemplate = sensorTemplates[key];
+
+                    const sensor = {
+                        obj: new sensorTemplate.constructor(this.sensorParams[key]),
+                        data: {},
+                    };
+
+                    for (const trackName of sensorTemplate.tracks) {
+                        sensor.data[trackName] = [];
                     }
 
-                    this.sensors[key].obj.onreading = () => {
-                        const data = [
-                            this.sensors[key].obj.x,
-                            this.sensors[key].obj.y,
-                            this.sensors[key].obj.z,
-                        ];
-                        if (this.sensorParams[key].callback) {
-                            this.sensorParams[key].callback(...data);
+                    const dataArrays = Object.values(data);
+
+                    sensor.pushData = (...data) => {
+                        for (let i = 0; i < data.length; i++) {
+                            dataArrays[i].push(data[i]);
                         }
-                        this.sensors[key].data.x.push(data[0]);
-                        this.sensors[key].data.y.push(data[1]);
-                        this.sensors[key].data.z.push(data[2]);
+                    }
+
+                    sensor.obj.onreading = () => {
+                        const data = sensorTemplate.getTracksFrom(sensor.obj);
+                        if (sensor.callback) { sensor.callback(...data); }
+                        sensor.pushData(...data);
                     };
+
+                    this.sensors[key] = sensor;
                 }
             }
 
@@ -499,14 +536,19 @@
             }
         }
 
-        
-        const ACCEL_GRAPH = new Graph($id("accel"), {
+        const accelerometerGraph = new Graph($id("accel"), {
             x: { color: "red", scale: 2 },
             y: { color: "green", scale: 2 },
             z: { color: "blue", scale: 2 },
         });
 
-        const GYRO_GRAPH = new Graph($id("gyro"), {
+        const gyroscopeGraph = new Graph($id("gyro"), {
+            x: { color: "red", scale: 10 },
+            y: { color: "green", scale: 10 },
+            z: { color: "blue", scale: 10 },
+        });
+
+        const relativeAccelGraph = new Graph($id("rel-accel"), {
             x: { color: "red", scale: 10 },
             y: { color: "green", scale: 10 },
             z: { color: "blue", scale: 10 },
@@ -528,7 +570,7 @@
                 window.alert(msg);
             };
 
-            const RECORDER = new Recorder({
+            const recorder = new Recorder({
                 videoElem: $query("video"),
 
                 constraints: {
@@ -543,45 +585,52 @@
                 bitrate: + idealBitrate * 1e6,
             }, {
                 accelerometer: {
-                    callback: (...data) => ACCEL_GRAPH.putData(...data),
+                    callback: (...data) => accelerometerGraph.putData(...data),
                     frequency: +idealSensorRate,
                 },
                 gyroscope: {
-                    callback: (...data) => GYRO_GRAPH.putData(...data),
+                    callback: (...data) => gyroscopeGraph.putData(...data),
+                    frequency: +idealSensorRate,
+                },
+                absoluteorientationsensor: {
+                    frequency: +idealSensorRate,
+                },
+                linearaccelerationsensor: {
+                    callback: (...data) => relativeAccelGraph.putData(...data),
                     frequency: +idealSensorRate,
                 },
             });
 
-            const RECBUTTON = $id("startstop");
+            const recordBtn = $id("startstop");
             //const DLVIDEOBUTTON = $id("video-dl");
-            const DLDATABUTTON = $id("data-dl");
+            const downloadDataBtn = $id("data-dl");
 
-            RECBUTTON.setState = (html, color = "rgba(255, 255, 255, 0.5)") => {
-                RECBUTTON.children[0].innerHTML = html;
-                RECBUTTON.style.backgroundColor = color;
+            recordBtn.setState = (html, color = "rgba(255, 255, 255, 0.5)") => {
+                recordBtn.children[0].innerHTML = html;
+                recordBtn.style.backgroundColor = color;
             }
 
             //DLVIDEOBUTTON.onclick = () => $download(RECORDER.getVideoBlob(), $timeAsFile());
-            DLDATABUTTON.onclick = () => {
+            downloadDataBtn.onclick = () => {
                 const filename = $timeAsFile();
-                $download(RECORDER.getSensorBlob(), filename);
-                $download(RECORDER.getVideoBlob(), filename);
+                $download(recorder.getSensorBlob(), filename);
+                $download(recorder.getVideoBlob(), filename);
             }
 
-            RECBUTTON.onclick = async () => {
-                switch (RECORDER.state) {
+            recordBtn.onclick = async () => {
+                switch (recorder.state) {
                     case "inactive":
-                        RECORDER.start();
-                        RECBUTTON.setState("stop recording", "rgb(255, 0, 0, 0.5)");
+                        recorder.start();
+                        recordBtn.setState("stop recording", "rgb(255, 0, 0, 0.5)");
                         break;
                     case "active": 
-                        await RECORDER.stop();
-                        RECBUTTON.setState("record");
+                        await recorder.stop();
+                        recordBtn.setState("record");
                         break;
                 }
             }
 
-            RECORDER.init().then(() => RECBUTTON.disabled = false);
+            recorder.init().then(() => recordBtn.disabled = false);
         }
 
         /*for (let i = 0; i < 100; i++) {
