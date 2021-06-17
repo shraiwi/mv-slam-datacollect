@@ -444,7 +444,7 @@
                         sensor.data[trackName] = [];
                     }
 
-                    const dataArrays = Object.values(data);
+                    const dataArrays = Object.values(sensor.data);
 
                     sensor.pushData = (...data) => {
                         for (let i = 0; i < data.length; i++) {
