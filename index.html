@@ -389,35 +389,35 @@
                     ...("Accelerometer" in window && {
                         accelerometer: {
                             constructor: Accelerometer,
-                            tracks: "x,y,z".split(),
+                            tracks: "x,y,z".split(','),
                             getTracksFrom(instance) { return [ instance.x, instance.y, instance.z ]; }
                         }
                     }),
                     ...("Gyroscope" in window && { 
                         gyroscope: {
                             constructor: Gyroscope,
-                            tracks: "x,y,z".split(),
+                            tracks: "x,y,z".split(','),
                             getTracksFrom(instance) { return [ instance.x, instance.y, instance.z ]; }
                         }
                     }),
                     ...("Magnetometer" in window && { 
                         magnetometer: {
                             constructor: Magnetometer,
-                            tracks: "x,y,z".split(),
+                            tracks: "x,y,z".split(','),
                             getTracksFrom(instance) { return [ instance.x, instance.y, instance.z ]; }
                         }
                     }),
                     ...("LinearAccelerationSensor" in window && { 
                         linearaccelerationsensor: {
                             constructor: LinearAccelerationSensor,
-                            tracks: "x,y,z".split(),
+                            tracks: "x,y,z".split(','),
                             getTracksFrom(instance) { return [ instance.x, instance.y, instance.z ]; }
                         }
                     }),
                     ...("AbsoluteOrientationSensor" in window && { 
                         absoluteorientationsensor: {
                             constructor: AbsoluteOrientationSensor,
-                            tracks: "quaternion.x,quaternion.y,quaternion.z,quaternion.w".split(),
+                            tracks: "quaternion.x,quaternion.y,quaternion.z,quaternion.w".split(','),
                             getTracksFrom(instance) { return [ instance.quaternion.x, instance.quaternion.y, instance.quaternion.z, instance.quaternion.w ]; }
                         }
                     }),
@@ -440,7 +440,7 @@
                         data: {},
                     };
 
-                    for (const trackName of sensorTemplate.tracks.split()) {
+                    for (const trackName of sensorTemplate.tracks) {
                         sensor.data[trackName] = [];
                     }
 
