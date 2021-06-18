@@ -516,7 +516,7 @@
                 let csv = this.tracks.join() + '\n';
                 
                 for (const row of this.data) {
-                    csv += row.join() + '\n';
+                    csv += row.map(n => n.toFixed(10)).join() + '\n';
                 }
 
                 return csv;
