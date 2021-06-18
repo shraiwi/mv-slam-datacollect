@@ -418,7 +418,7 @@
                         absoluteorientationsensor: {
                             constructor: AbsoluteOrientationSensor,
                             tracks: "quaternion.x,quaternion.y,quaternion.z,quaternion.w".split(','),
-                            getTracksFrom(instance) { return [ instance.quaternion.x, instance.quaternion.y, instance.quaternion.z, instance.quaternion.w ]; }
+                            getTracksFrom(instance) { return instance.quaternion; }
                         }
                     }),
                 }
