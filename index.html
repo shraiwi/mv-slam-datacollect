@@ -365,7 +365,13 @@
 
             _onSensorData() {
                 const row = [];
-                for (const sensor of Object.values(this.sensors)) { row.push(...sensor.getTracks()); }
+                for (const sensor of Object.values(this.sensors)) { 
+                    const tracks = sensor.getTracks();
+                    if (tracks.some(d => !d)) return;
+
+                    sensor.callback(...tracks);
+                    row.push(...tracks); 
+                }
                 this.data.push(row);
             }
 
@@ -449,6 +455,8 @@
                     });
 
                     sensor.getTracks = () => sensorTemplate.getter(sensor);
+
+                    if (this.sensorParams[key].callback) sensor.callback = this.sensorParams[key].callback;
 
                     this.tracks.push(...sensorTemplate.tracks.map(s => key + '.' + s));
 
