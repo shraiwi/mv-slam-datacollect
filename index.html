@@ -453,6 +453,7 @@
 
                     sensor.obj.onreading = () => {
                         const data = sensorTemplate.getTracksFrom(sensor.obj);
+                        if (!data) console.warn("Invalid reading from sensor " + sensor.obj);
                         if (sensor.callback) { sensor.callback(...data); }
                         sensor.pushData(...data);
                     };
@@ -589,9 +590,6 @@
                 },
                 gyroscope: {
                     callback: (...data) => gyroscopeGraph.putData(...data),
-                    frequency: +idealSensorRate,
-                },
-                absoluteorientationsensor: {
                     frequency: +idealSensorRate,
                 },
                 linearaccelerationsensor: {
